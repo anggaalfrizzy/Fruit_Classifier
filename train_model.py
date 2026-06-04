@@ -10,7 +10,7 @@ import json
 
 IMG_SIZE              = (64, 64)
 MAX_SAMPLES_PER_CLASS = 1500
-N_ESTIMATORS          = 500
+N_ESTIMATORS          = 50
 OUTPUT_DIR            = "model"
 
 def extract_features(img_pil):
