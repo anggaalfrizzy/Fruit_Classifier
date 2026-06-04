@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hasil Klasifikasi — FruitScan</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --clr-bg:      #0a0f0d;
+      --clr-surface: #111a15;
+      --clr-card:    #162019;
+      --clr-border:  #1f3328;
+      --clr-accent:  #3ddc84;
+      --clr-accent2: #f5a623;
+      --clr-text:    #e8f5ee;
+      --clr-muted:   #6b8f78;
+      --ff-head:     'Syne', sans-serif;
+      --ff-mono:     'Space Mono', monospace;
+      --radius:      14px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--clr-bg);
+      color: var(--clr-text);
+      font-family: var(--ff-head);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(61,220,132,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(61,220,132,.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+    .glow-blob { position:fixed; border-radius:50%; filter:blur(100px); opacity:.2; pointer-events:none; z-index:0; }
+    .glow-blob.g1 { width:500px; height:500px; background:#3ddc84; top:-100px; right:-100px; }
+    .glow-blob.g2 { width:350px; height:350px; background:#f5a623; bottom:-80px; left:-80px; }
+
+    /* Navbar */
+    .navbar {
+      background: rgba(10,15,13,.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--clr-border);
+      padding: 14px 0; position:relative; z-index:10;
+    }
+    .navbar-brand { font-family:var(--ff-head); font-weight:800; font-size:1.4rem; color:var(--clr-accent) !important; letter-spacing:-1px; }
+    .navbar-brand span { color:var(--clr-text); }
+    .nav-link { color:var(--clr-muted) !important; font-size:.875rem; transition:color .2s; }
+    .nav-link:hover { color:var(--clr-accent) !important; }
+
+    /* Page wrapper */
+    .page-wrap { position:relative; z-index:1; padding: 60px 0; }
+
+    /* Result hero */
+    .result-hero { text-align:center; margin-bottom:50px; }
+    .result-hero .tag {
+      display:inline-flex; align-items:center; gap:6px;
+      font-family:var(--ff-mono); font-size:.72rem; color:var(--clr-accent);
+      border:1px solid var(--clr-accent); border-radius:100px; padding:4px 12px;
+      margin-bottom:16px; letter-spacing:.08em;
+    }
+    .result-hero h1 { font-size: clamp(2rem,5vw,3.5rem); font-weight:800; letter-spacing:-2px; }
+    .result-hero h1 .accent { color:var(--clr-accent); }
+
+    /* Main result card */
+    .result-card {
+      background: var(--clr-card);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    /* Image panel */
+    .img-panel {
+      background: var(--clr-surface);
+      border-right: 1px solid var(--clr-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      min-height: 320px;
+    }
+    .img-panel img {
+      max-width: 100%;
+      max-height: 280px;
+      border-radius: 10px;
+      object-fit: contain;
+      box-shadow: 0 8px 40px rgba(0,0,0,.5);
+    }
+
+    /* Result panel */
+    .result-panel { padding: 36px; }
+
+    .label-tag {
+      display: inline-block;
+      font-family: var(--ff-mono);
+      font-size: .72rem;
+      color: var(--clr-muted);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-bottom: 8px;
+    }
+    .fruit-name {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      color: var(--clr-accent);
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+
+    /* Confidence meter */
+    .conf-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .conf-row .label { font-size:.8rem; color:var(--clr-muted); }
+    .conf-row .value {
+      font-family: var(--ff-mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--clr-accent);
+    }
+    .conf-bar-wrap {
+      background: var(--clr-border);
+      border-radius: 100px;
+      height: 8px;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .conf-bar {
+      height: 100%;
+      border-radius: 100px;
+      background: linear-gradient(90deg, #3ddc84, #22c55e);
+      width: 0;
+      transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* Verdict badge */
+    .verdict {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 100px;
+      font-size: .85rem;
+      font-weight: 600;
+      margin-bottom: 28px;
+    }
+    .verdict.high   { background:rgba(61,220,132,.12); color:var(--clr-accent); border:1px solid rgba(61,220,132,.3); }
+    .verdict.medium { background:rgba(245,166,35,.12);  color:var(--clr-accent2); border:1px solid rgba(245,166,35,.3); }
+    .verdict.low    { background:rgba(220,53,69,.12);   color:#ff6b7a; border:1px solid rgba(220,53,69,.3); }
+
+    /* Divider */
+    .divider { border-top: 1px solid var(--clr-border); margin: 20px 0; }
+
+    /* Top-5 list */
+    .top5-title {
+      font-size: .78rem;
+      color: var(--clr-muted);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-bottom: 14px;
+    }
+    .top5-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .top5-item .rank {
+      font-family: var(--ff-mono);
+      font-size: .7rem;
+      color: var(--clr-muted);
+      width: 20px;
+      flex-shrink: 0;
+    }
+    .top5-item .name {
+      font-size: .85rem;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .top5-item .name.is-top { color: var(--clr-accent); font-weight: 700; }
+    .top5-bar-wrap {
+      flex: 2;
+      background: var(--clr-border);
+      border-radius: 100px;
+      height: 5px;
+      overflow: hidden;
+    }
+    .top5-bar {
+      height: 100%;
+      border-radius: 100px;
+      background: var(--clr-accent);
+      opacity: .6;
+      width: 0;
+      transition: width 1s ease;
+    }
+    .top5-bar.is-top { opacity: 1; }
+    .top5-item .pct {
+      font-family: var(--ff-mono);
+      font-size: .72rem;
+      color: var(--clr-muted);
+      width: 42px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* Action buttons */
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      color: var(--clr-text);
+      border: 1px solid var(--clr-border);
+      border-radius: 100px;
+      padding: 12px 24px;
+      font-family: var(--ff-head);
+      font-size: .9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-back:hover { border-color: var(--clr-accent); color: var(--clr-accent); }
+    .btn-again {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--clr-accent);
+      color: #0a0f0d;
+      border: none;
+      border-radius: 100px;
+      padding: 12px 28px;
+      font-family: var(--ff-head);
+      font-size: .9rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .btn-again:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(61,220,132,.3);
+      color: #0a0f0d;
+    }
+
+    footer {
+      position:relative; z-index:1; text-align:center;
+      padding:40px 0; color:var(--clr-muted); font-size:.78rem;
+      border-top:1px solid var(--clr-border); margin-top:60px;
+      font-family:var(--ff-mono);
+    }
+  </style>
+</head>
+<body>
+<div class="glow-blob g1"></div>
+<div class="glow-blob g2"></div>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="/">🍎 Fruit<span>Scan</span></a>
+    <ul class="navbar-nav ms-auto gap-3">
+      <li class="nav-item"><a class="nav-link" href="/">Beranda</a></li>
+      <li class="nav-item"><a class="nav-link" href="/about">Tentang</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page-wrap">
+  <div class="container">
+
+    <!-- Result Hero -->
+    <div class="result-hero">
+      <div class="tag">✓ Analisis Selesai</div>
+      <h1>Buah Teridentifikasi:<br/><span class="accent">{{ result.label }}</span></h1>
+    </div>
+
+    <!-- Main Result Card -->
+    <div class="result-card">
+      <div class="row g-0">
+
+        <!-- Image -->
+        <div class="col-md-4">
+          <div class="img-panel">
+            <img src="{{ url_for('static', filename=image_path) }}" alt="Gambar buah yang diupload"/>
+          </div>
+        </div>
+
+        <!-- Result Details -->
+        <div class="col-md-8">
+          <div class="result-panel">
+            <span class="label-tag">Hasil Klasifikasi</span>
+            <div class="fruit-name">{{ result.label }}</div>
+
+            <!-- Verdict badge -->
+            {% if result.confidence >= 70 %}
+              <div class="verdict high"><i class="bi bi-patch-check-fill"></i> Kepercayaan Tinggi</div>
+            {% elif result.confidence >= 40 %}
+              <div class="verdict medium"><i class="bi bi-patch-question-fill"></i> Kepercayaan Sedang</div>
+            {% else %}
+              <div class="verdict low"><i class="bi bi-patch-exclamation-fill"></i> Kepercayaan Rendah</div>
+            {% endif %}
+
+            <!-- Confidence bar -->
+            <div class="conf-row">
+              <span class="label">Tingkat Kepercayaan</span>
+              <span class="value" id="confValue">0%</span>
+            </div>
+            <div class="conf-bar-wrap">
+              <div class="conf-bar" id="confBar"></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Top-5 -->
+            <div class="top5-title">Top-5 Prediksi</div>
+            {% for item in result.top5 %}
+            <div class="top5-item">
+              <span class="rank">#{{ loop.index }}</span>
+              <span class="name {% if loop.first %}is-top{% endif %}">{{ item.label }}</span>
+              <div class="top5-bar-wrap">
+                <div class="top5-bar {% if loop.first %}is-top{% endif %}"
+                     data-pct="{{ item.confidence }}"></div>
+              </div>
+              <span class="pct">{{ item.confidence }}%</span>
+            </div>
+            {% endfor %}
+
+            <div class="divider"></div>
+
+            <!-- Action buttons -->
+            <div class="d-flex gap-3 flex-wrap">
+              <a href="/" class="btn-back"><i class="bi bi-arrow-left"></i> Kembali</a>
+              <a href="/" class="btn-again"><i class="bi bi-arrow-repeat"></i> Identifikasi Lagi</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    FruitScan — Tugas 8 Kecerdasan Buatan &nbsp;·&nbsp; Random Forest Classifier &nbsp;·&nbsp; Universitas Bale Bandung
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const confidence = {{ result.confidence }};
+
+  // Animate confidence bar
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      const bar = document.getElementById('confBar');
+      const val = document.getElementById('confValue');
+      bar.style.width = confidence + '%';
+
+      // Animate counter
+      let start = 0;
+      const step = confidence / 60;
+      const timer = setInterval(() => {
+        start = Math.min(start + step, confidence);
+        val.textContent = start.toFixed(1) + '%';
+        if (start >= confidence) { val.textContent = confidence + '%'; clearInterval(timer); }
+      }, 16);
+
+      // Animate top-5 bars
+      document.querySelectorAll('.top5-bar').forEach(bar => {
+        bar.style.width = bar.dataset.pct + '%';
+      });
+    }, 200);
+  });
+</script>
+</body>
+</html>

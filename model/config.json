@@ -1,0 +1,16 @@
+{
+  "img_size": [
+    64,
+    64
+  ],
+  "n_classes": 5,
+  "class_names": [
+    "Apple",
+    "Banana",
+    "Grape",
+    "Mango",
+    "Strawberry"
+  ],
+  "accuracy": 0.62,
+  "use_scaler": true
+}

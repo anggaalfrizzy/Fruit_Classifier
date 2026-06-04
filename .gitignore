@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.pkl
+*.pth
+*.egg-info/
+dist/
+build/
+.env
+venv/
+.venv/
+fruits-360/
+static/uploads/*
+!static/uploads/.gitkeep
+model/rf_model.pkl
+model/label_encoder.pkl
+.DS_Store
+*.log

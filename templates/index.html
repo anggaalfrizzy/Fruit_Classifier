@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FruitScan — Klasifikasi Buah dengan AI</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --clr-bg:       #0a0f0d;
+      --clr-surface:  #111a15;
+      --clr-card:     #162019;
+      --clr-border:   #1f3328;
+      --clr-accent:   #3ddc84;
+      --clr-accent2:  #f5a623;
+      --clr-text:     #e8f5ee;
+      --clr-muted:    #6b8f78;
+      --ff-head:      'Syne', sans-serif;
+      --ff-mono:      'Space Mono', monospace;
+      --radius:       14px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--clr-bg);
+      color: var(--clr-text);
+      font-family: var(--ff-head);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Grid noise overlay ─────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(61,220,132,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(61,220,132,.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Glow blobs ─────────────────────────────────── */
+    .glow-blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: .25;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glow-blob.g1 { width:500px; height:500px; background:#3ddc84; top:-120px; left:-120px; }
+    .glow-blob.g2 { width:400px; height:400px; background:#f5a623; bottom:-100px; right:-80px; }
+
+    /* ── Navbar ─────────────────────────────────────── */
+    .navbar {
+      background: rgba(10,15,13,.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--clr-border);
+      padding: 14px 0;
+      position: relative;
+      z-index: 10;
+    }
+    .navbar-brand {
+      font-family: var(--ff-head);
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: var(--clr-accent) !important;
+      letter-spacing: -1px;
+    }
+    .navbar-brand span { color: var(--clr-text); }
+    .nav-link {
+      color: var(--clr-muted) !important;
+      font-size: .875rem;
+      transition: color .2s;
+    }
+    .nav-link:hover { color: var(--clr-accent) !important; }
+
+    /* ── Hero ────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      padding: 80px 0 60px;
+      text-align: center;
+    }
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--ff-mono);
+      font-size: .72rem;
+      color: var(--clr-accent);
+      border: 1px solid var(--clr-accent);
+      border-radius: 100px;
+      padding: 4px 12px;
+      margin-bottom: 20px;
+      letter-spacing: .08em;
+    }
+    .hero-tag::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--clr-accent);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:.4; transform:scale(1.4); }
+    }
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -2px;
+    }
+    .hero h1 .accent { color: var(--clr-accent); }
+    .hero p.lead {
+      color: var(--clr-muted);
+      font-size: 1.05rem;
+      max-width: 480px;
+      margin: 16px auto 0;
+      line-height: 1.65;
+    }
+
+    /* ── Stats Row ───────────────────────────────────── */
+    .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+      margin-top: 40px;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-item .num {
+      font-family: var(--ff-mono);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--clr-accent);
+    }
+    .stat-item .lbl {
+      font-size: .75rem;
+      color: var(--clr-muted);
+      margin-top: 2px;
+    }
+
+    /* ── Upload Card ─────────────────────────────────── */
+    .upload-card {
+      background: var(--clr-card);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius);
+      padding: 40px;
+      position: relative;
+      z-index: 1;
+    }
+    .drop-zone {
+      border: 2px dashed var(--clr-border);
+      border-radius: calc(var(--radius) - 4px);
+      padding: 60px 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .3s, background .3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: var(--clr-accent);
+      background: rgba(61,220,132,.04);
+    }
+    .drop-zone .icon-wrap {
+      width: 64px; height: 64px;
+      border-radius: 16px;
+      background: rgba(61,220,132,.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 1.8rem;
+      color: var(--clr-accent);
+    }
+    .drop-zone h5 {
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .drop-zone p {
+      font-size: .85rem;
+      color: var(--clr-muted);
+    }
+    #fileInput { display: none; }
+
+    /* Preview image inside dropzone */
+    #previewImg {
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: 10px;
+      margin: 16px auto 0;
+      display: none;
+      box-shadow: 0 4px 24px rgba(0,0,0,.4);
+    }
+    #fileName {
+      font-family: var(--ff-mono);
+      font-size: .75rem;
+      color: var(--clr-accent);
+      margin-top: 8px;
+      display: none;
+    }
+
+    /* ── Btn ─────────────────────────────────────────── */
+    .btn-scan {
+      background: var(--clr-accent);
+      color: #0a0f0d;
+      font-weight: 700;
+      font-family: var(--ff-head);
+      border: none;
+      border-radius: 100px;
+      padding: 14px 36px;
+      font-size: 1rem;
+      width: 100%;
+      margin-top: 20px;
+      transition: transform .2s, box-shadow .2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-scan:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(61,220,132,.35);
+      color: #0a0f0d;
+    }
+    .btn-scan:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+    .btn-scan .spinner-border {
+      width: 1rem; height: 1rem;
+      border-width: 2px;
+      margin-right: 8px;
+      display: none;
+    }
+    .btn-scan.loading .spinner-border { display: inline-block; }
+    .btn-scan.loading .btn-text       { display: none; }
+
+    /* ── Alerts ──────────────────────────────────────── */
+    .alert {
+      border-radius: var(--radius);
+      border: none;
+      font-size: .875rem;
+    }
+    .alert-danger  { background: rgba(220,53,69,.15); color: #ff6b7a; }
+    .alert-warning { background: rgba(255,193,7,.12); color: #ffc107; }
+    .alert-success { background: rgba(61,220,132,.12); color: var(--clr-accent); }
+
+    /* ── Model Status Badge ───────────────────────────── */
+    .model-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--ff-mono);
+      font-size: .72rem;
+      padding: 5px 12px;
+      border-radius: 100px;
+      border: 1px solid;
+    }
+    .model-badge.ready {
+      color: var(--clr-accent);
+      border-color: var(--clr-accent);
+      background: rgba(61,220,132,.08);
+    }
+    .model-badge.not-ready {
+      color: #ff6b7a;
+      border-color: #ff6b7a;
+      background: rgba(220,53,69,.08);
+    }
+    .model-badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* ── Sidebar Info Cards ──────────────────────────── */
+    .info-card {
+      background: var(--clr-card);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .info-card h6 {
+      font-size: .8rem;
+      color: var(--clr-muted);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-bottom: 12px;
+    }
+    .step-list { list-style: none; padding: 0; }
+    .step-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: .875rem;
+      color: var(--clr-text);
+      margin-bottom: 10px;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: rgba(61,220,132,.15);
+      color: var(--clr-accent);
+      font-family: var(--ff-mono);
+      font-size: .7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .fruit-chip {
+      display: inline-block;
+      font-size: .72rem;
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: rgba(61,220,132,.1);
+      color: var(--clr-accent);
+      border: 1px solid rgba(61,220,132,.2);
+      margin: 3px 2px;
+      font-family: var(--ff-mono);
+    }
+
+    /* ── Footer ──────────────────────────────────────── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 40px 0;
+      color: var(--clr-muted);
+      font-size: .78rem;
+      border-top: 1px solid var(--clr-border);
+      margin-top: 60px;
+      font-family: var(--ff-mono);
+    }
+    footer a { color: var(--clr-accent); text-decoration: none; }
+
+    /* ── Not-ready overlay ──────────────────────────── */
+    .not-ready-overlay {
+      background: rgba(10,15,13,.8);
+      border-radius: var(--radius);
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      backdrop-filter: blur(4px);
+      z-index: 5;
+    }
+    .not-ready-overlay i { font-size: 2rem; color: #ff6b7a; }
+    .not-ready-overlay p { font-size: .875rem; color: var(--clr-muted); text-align:center; }
+    .not-ready-overlay code {
+      background: var(--clr-border);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: .8rem;
+      color: var(--clr-accent);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Decorative blobs -->
+<div class="glow-blob g1"></div>
+<div class="glow-blob g2"></div>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="/">🍎 Fruit<span>Scan</span></a>
+    <ul class="navbar-nav ms-auto gap-3">
+      <li class="nav-item"><a class="nav-link" href="/">Beranda</a></li>
+      <li class="nav-item"><a class="nav-link" href="/about">Tentang</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero container">
+  <div class="hero-tag">Random Forest · Fruits 360 Dataset</div>
+  <h1>Kenali <span class="accent">Jenis Buah</span><br/>dengan Kecerdasan Buatan</h1>
+  <p class="lead">Upload foto buah, model AI akan menganalisis dan mengklasifikasikan jenisnya secara instan.</p>
+
+  {% if model_ready and config %}
+  <div class="stats-row">
+    <div class="stat-item">
+      <div class="num">{{ config.n_classes }}</div>
+      <div class="lbl">Jenis Buah</div>
+    </div>
+    <div class="stat-item">
+      <div class="num">{{ (config.accuracy * 100)|round(1) }}%</div>
+      <div class="lbl">Akurasi Model</div>
+    </div>
+    <div class="stat-item">
+      <div class="num">RF</div>
+      <div class="lbl">Algoritma</div>
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<!-- Main content -->
+<div class="container pb-5">
+  <div class="row g-4">
+
+    <!-- Upload Column -->
+    <div class="col-lg-7">
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }} d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            <span>{{ msg }}</span>
+          </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <div class="upload-card">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="mb-0" style="font-weight:800;">Upload Gambar Buah</h5>
+          {% if model_ready %}
+          <span class="model-badge ready"><span class="dot"></span> Model Siap</span>
+          {% else %}
+          <span class="model-badge not-ready"><span class="dot"></span> Model Belum Ada</span>
+          {% endif %}
+        </div>
+
+        <form method="POST" action="/predict" enctype="multipart/form-data" id="uploadForm">
+          <!-- Drop Zone -->
+          <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <div class="icon-wrap" id="iconWrap">
+              <i class="bi bi-cloud-arrow-up"></i>
+            </div>
+            <h5 id="dropTitle">Klik atau Seret Gambar ke Sini</h5>
+            <p>Format: PNG, JPG, JPEG · Maks. 5 MB</p>
+            <img id="previewImg" src="" alt="preview"/>
+            <div id="fileName"></div>
+          </div>
+          <input type="file" id="fileInput" name="file" accept=".png,.jpg,.jpeg,.webp"/>
+
+          <button type="submit" class="btn-scan" id="scanBtn"
+            {% if not model_ready %}disabled{% endif %}>
+            <span class="spinner-border" role="status"></span>
+            <span class="btn-text">
+              <i class="bi bi-search me-2"></i>Identifikasi Buah
+            </span>
+          </button>
+
+          {% if not model_ready %}
+          <div class="not-ready-overlay">
+            <i class="bi bi-robot"></i>
+            <p>Model belum tersedia.<br/>Jalankan perintah berikut dahulu:</p>
+            <code>python train_model.py</code>
+          </div>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-5">
+
+      <!-- How to use -->
+      <div class="info-card">
+        <h6>Cara Penggunaan</h6>
+        <ul class="step-list">
+          <li>
+            <span class="step-num">1</span>
+            <span>Pilih atau seret foto buah dari perangkat kamu.</span>
+          </li>
+          <li>
+            <span class="step-num">2</span>
+            <span>Klik tombol <strong>Identifikasi Buah</strong>.</span>
+          </li>
+          <li>
+            <span class="step-num">3</span>
+            <span>Model AI akan menganalisis gambar dan menampilkan hasil klasifikasi beserta tingkat kepercayaan.</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Supported fruits -->
+      <div class="info-card">
+        <h6>Contoh Buah yang Didukung</h6>
+        <div>
+          {% set sample_fruits = ['Apple', 'Banana', 'Mango', 'Orange', 'Strawberry',
+                                   'Grape', 'Pineapple', 'Watermelon', 'Avocado', 'Lemon',
+                                   'Kiwi', 'Peach', 'Cherry', 'Blueberry', 'Raspberry'] %}
+          {% if model_ready and config %}
+            {% for cls in config.class_names[:20] %}
+              <span class="fruit-chip">{{ cls }}</span>
+            {% endfor %}
+            {% if config.class_names|length > 20 %}
+              <span class="fruit-chip">+{{ config.class_names|length - 20 }} lainnya</span>
+            {% endif %}
+          {% else %}
+            {% for f in sample_fruits %}
+              <span class="fruit-chip">{{ f }}</span>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Algorithm info -->
+      <div class="info-card">
+        <h6>Tentang Model</h6>
+        <div style="font-size:.85rem; color:var(--clr-muted); line-height:1.7;">
+          Model menggunakan algoritma <strong style="color:var(--clr-text)">Random Forest</strong>
+          dari library Scikit-learn. Gambar diproses dengan resize ke 32×32 piksel lalu
+          diklasifikasikan menggunakan 200 pohon keputusan secara ensemble.
+          Dataset: <strong style="color:var(--clr-text)">Fruits 360</strong> (Kaggle).
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    FruitScan — Tugas 8 Kecerdasan Buatan &nbsp;·&nbsp;
+    Random Forest Classifier &nbsp;·&nbsp;
+    Universitas Bale Bandung
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const dropZone  = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const previewImg= document.getElementById('previewImg');
+  const fileNameEl= document.getElementById('fileName');
+  const iconWrap  = document.getElementById('iconWrap');
+  const dropTitle = document.getElementById('dropTitle');
+  const scanBtn   = document.getElementById('scanBtn');
+  const uploadForm= document.getElementById('uploadForm');
+
+  function handleFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      previewImg.src = e.target.result;
+      previewImg.style.display = 'block';
+      iconWrap.style.display = 'none';
+      dropTitle.textContent = 'Gambar siap dianalisis!';
+      fileNameEl.textContent = file.name;
+      fileNameEl.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+
+  // Drag & drop
+  dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) { fileInput.files = e.dataTransfer.files; handleFile(file); }
+  });
+
+  // Loading state on submit
+  uploadForm.addEventListener('submit', () => {
+    scanBtn.classList.add('loading');
+    scanBtn.disabled = true;
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tentang — FruitScan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --clr-bg:     #0a0f0d; --clr-surface:#111a15; --clr-card:#162019;
+      --clr-border: #1f3328; --clr-accent: #3ddc84; --clr-accent2:#f5a623;
+      --clr-text:   #e8f5ee; --clr-muted:  #6b8f78;
+      --ff-head:    'Syne', sans-serif; --ff-mono:'Space Mono', monospace;
+      --radius: 14px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--clr-bg);color:var(--clr-text);font-family:var(--ff-head);min-height:100vh;}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(61,220,132,.04)1px,transparent 1px),linear-gradient(90deg,rgba(61,220,132,.04)1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+    .glow-blob{position:fixed;border-radius:50%;filter:blur(100px);opacity:.18;pointer-events:none;z-index:0;}
+    .glow-blob.g1{width:500px;height:500px;background:#3ddc84;top:-100px;left:-100px;}
+    .navbar{background:rgba(10,15,13,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--clr-border);padding:14px 0;position:relative;z-index:10;}
+    .navbar-brand{font-family:var(--ff-head);font-weight:800;font-size:1.4rem;color:var(--clr-accent)!important;letter-spacing:-1px;}
+    .navbar-brand span{color:var(--clr-text);}
+    .nav-link{color:var(--clr-muted)!important;font-size:.875rem;transition:color .2s;}
+    .nav-link:hover{color:var(--clr-accent)!important;}
+
+    .page-wrap{position:relative;z-index:1;padding:70px 0;}
+    .page-title{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;letter-spacing:-2px;margin-bottom:8px;}
+    .page-title .accent{color:var(--clr-accent);}
+    .subtitle{color:var(--clr-muted);font-size:1rem;margin-bottom:50px;}
+
+    .section-card{background:var(--clr-card);border:1px solid var(--clr-border);border-radius:var(--radius);padding:32px;margin-bottom:20px;}
+    .section-card h5{font-weight:800;font-size:1.1rem;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+    .section-card h5 .icon{width:36px;height:36px;border-radius:10px;background:rgba(61,220,132,.12);color:var(--clr-accent);display:flex;align-items:center;justify-content:center;font-size:1rem;}
+    .section-card p,.section-card li{color:var(--clr-muted);font-size:.9rem;line-height:1.75;}
+    .section-card ul{padding-left:0;list-style:none;}
+    .section-card ul li{padding-left:20px;position:relative;margin-bottom:6px;}
+    .section-card ul li::before{content:'→';position:absolute;left:0;color:var(--clr-accent);}
+
+    .tech-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;}
+    .tech-chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--ff-mono);font-size:.72rem;padding:5px 12px;border-radius:100px;background:rgba(61,220,132,.08);color:var(--clr-accent);border:1px solid rgba(61,220,132,.2);}
+
+    .flow-steps{display:flex;flex-direction:column;gap:16px;margin-top:8px;}
+    .flow-step{display:flex;gap:16px;align-items:flex-start;}
+    .flow-step .num{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:rgba(61,220,132,.15);color:var(--clr-accent);font-family:var(--ff-mono);font-size:.8rem;display:flex;align-items:center;justify-content:center;}
+    .flow-step .content h6{font-size:.9rem;font-weight:700;margin-bottom:2px;}
+    .flow-step .content p{font-size:.82rem;color:var(--clr-muted);margin:0;}
+
+    .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px;margin-top:12px;}
+    .metric-item{background:var(--clr-surface);border:1px solid var(--clr-border);border-radius:10px;padding:16px;text-align:center;}
+    .metric-item .val{font-family:var(--ff-mono);font-size:1.4rem;font-weight:700;color:var(--clr-accent);}
+    .metric-item .lbl{font-size:.72rem;color:var(--clr-muted);margin-top:4px;}
+
+    footer{position:relative;z-index:1;text-align:center;padding:40px 0;color:var(--clr-muted);font-size:.78rem;border-top:1px solid var(--clr-border);margin-top:60px;font-family:var(--ff-mono);}
+  </style>
+</head>
+<body>
+<div class="glow-blob g1"></div>
+
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="/">🍎 Fruit<span>Scan</span></a>
+    <ul class="navbar-nav ms-auto gap-3">
+      <li class="nav-item"><a class="nav-link" href="/">Beranda</a></li>
+      <li class="nav-item"><a class="nav-link active" href="/about">Tentang</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page-wrap">
+  <div class="container">
+    <h1 class="page-title">Tentang <span class="accent">FruitScan</span></h1>
+    <p class="subtitle">Sistem klasifikasi buah berbasis Kecerdasan Buatan menggunakan algoritma Random Forest</p>
+
+    <div class="row g-4">
+      <div class="col-lg-8">
+
+        <!-- Deskripsi -->
+        <div class="section-card">
+          <h5><span class="icon"><i class="bi bi-info-circle"></i></span> Deskripsi Proyek</h5>
+          <p>FruitScan adalah aplikasi web berbasis Flask yang mengimplementasikan algoritma <strong style="color:var(--clr-text)">Random Forest</strong> untuk mengklasifikasikan jenis buah dari gambar. Proyek ini merupakan bagian dari Tugas 8 Praktikum Kecerdasan Buatan di Program Studi Teknik Informatika, Universitas Bale Bandung.</p>
+          <br/>
+          <p>Model dilatih menggunakan dataset <strong style="color:var(--clr-text)">Fruits 360</strong> dari Kaggle yang berisi ribuan gambar dari berbagai jenis buah, kemudian di-deploy dalam sebuah aplikasi web yang memungkinkan pengguna mengklasifikasikan buah hanya dengan mengupload gambar.</p>
+        </div>
+
+        <!-- Cara Kerja -->
+        <div class="section-card">
+          <h5><span class="icon"><i class="bi bi-diagram-3"></i></span> Cara Kerja Sistem</h5>
+          <div class="flow-steps">
+            <div class="flow-step">
+              <span class="num">1</span>
+              <div class="content">
+                <h6>Input Gambar</h6>
+                <p>Pengguna mengupload gambar buah melalui antarmuka web (drag & drop atau pilih file).</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <span class="num">2</span>
+              <div class="content">
+                <h6>Preprocessing</h6>
+                <p>Gambar di-resize ke ukuran 32×32 piksel, dikonversi ke format RGB, lalu dinormalisasi ke rentang [0,1] dan di-flatten menjadi vektor fitur.</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <span class="num">3</span>
+              <div class="content">
+                <h6>Prediksi Random Forest</h6>
+                <p>Vektor fitur dimasukkan ke model Random Forest (200 pohon keputusan). Setiap pohon memberikan vote, hasil akhir ditentukan berdasarkan mayoritas voting.</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <span class="num">4</span>
+              <div class="content">
+                <h6>Output Hasil</h6>
+                <p>Sistem menampilkan label kelas buah, tingkat kepercayaan (confidence), dan top-5 prediksi alternatif.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech Stack -->
+        <div class="section-card">
+          <h5><span class="icon"><i class="bi bi-stack"></i></span> Teknologi yang Digunakan</h5>
+          <div class="tech-grid">
+            <span class="tech-chip"><i class="bi bi-filetype-py"></i> Python 3.10+</span>
+            <span class="tech-chip">Flask 3.x</span>
+            <span class="tech-chip">Scikit-Learn</span>
+            <span class="tech-chip">NumPy</span>
+            <span class="tech-chip">Pillow (PIL)</span>
+            <span class="tech-chip">Bootstrap 5</span>
+            <span class="tech-chip">Fruits 360 Dataset</span>
+            <span class="tech-chip">Random Forest Classifier</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="col-lg-4">
+
+        <!-- Model Info -->
+        <div class="section-card">
+          <h5><span class="icon"><i class="bi bi-cpu"></i></span> Informasi Model</h5>
+          {% if config %}
+          <div class="metric-grid">
+            <div class="metric-item">
+              <div class="val">{{ config.n_classes }}</div>
+              <div class="lbl">Kelas Buah</div>
+            </div>
+            <div class="metric-item">
+              <div class="val">{{ (config.accuracy * 100)|round(1) }}%</div>
+              <div class="lbl">Akurasi</div>
+            </div>
+            <div class="metric-item">
+              <div class="val">200</div>
+              <div class="lbl">Pohon RF</div>
+            </div>
+            <div class="metric-item">
+              <div class="val">32²</div>
+              <div class="lbl">Ukuran Input</div>
+            </div>
+          </div>
+          {% else %}
+          <p style="color:var(--clr-muted);font-size:.85rem;">Model belum dilatih. Jalankan <code style="color:var(--clr-accent)">python train_model.py</code> untuk memulai training.</p>
+          {% endif %}
+        </div>
+
+        <!-- Dataset -->
+        <div class="section-card">
+          <h5><span class="icon"><i class="bi bi-database"></i></span> Dataset</h5>
+          <ul style="margin-top:4px;">
+            <li>Fruits 360 (Kaggle)</li>
+            <li>Tersedia 90+ jenis buah</li>
+            <li>Format gambar: 100×100 px JPG</li>
+            <li>Sumber terpercaya & open access</li>
+          </ul>
+          <br/>
+          <a href="https://www.kaggle.com/datasets/moltean/fruits" target="_blank"
+             style="font-family:var(--ff-mono);font-size:.75rem;color:var(--clr-accent);text-decoration:none;">
+            <i class="bi bi-box-arrow-up-right"></i> Lihat Dataset di Kaggle
+          </a>
+        </div>
+
+        <!-- Referensi -->
+        <div class="section-card">
+          <h5><span class="icon"><i class="bi bi-journal-text"></i></span> Referensi</h5>
+          <ul>
+            <li>Breiman, L. (2001). Random Forests. Machine Learning, 45(1), 5–32.</li>
+            <li>Scikit-learn: Machine Learning in Python</li>
+            <li>Fruits 360 Dataset — Mihai Oltean (Kaggle)</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    FruitScan — Tugas 8 Kecerdasan Buatan &nbsp;·&nbsp; Random Forest Classifier &nbsp;·&nbsp; Universitas Bale Bandung
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
